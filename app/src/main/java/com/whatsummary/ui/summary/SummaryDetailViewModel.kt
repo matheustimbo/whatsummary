@@ -3,8 +3,10 @@ package com.whatsummary.ui.summary
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.whatsummary.data.api.AnthropicClient
 import com.whatsummary.data.db.entity.Summary
+import com.whatsummary.data.llm.ApiSummaryGenerator
+import com.whatsummary.data.llm.LocalSummaryGenerator
+import com.whatsummary.data.llm.SummaryGenerator
 import com.whatsummary.data.preferences.UserPreferences
 import com.whatsummary.data.repository.MessageRepository
 import com.whatsummary.data.repository.SummaryRepository
@@ -31,7 +33,8 @@ class SummaryDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val summaryRepository: SummaryRepository,
     private val messageRepository: MessageRepository,
-    private val anthropicClient: AnthropicClient,
+    private val apiGenerator: ApiSummaryGenerator,
+    private val localGenerator: LocalSummaryGenerator,
     private val preferences: UserPreferences
 ) : ViewModel() {
 
@@ -62,14 +65,19 @@ class SummaryDetailViewModel @Inject constructor(
                 return@launch
             }
 
-            val prompt = PromptBuilder.buildSummaryPrompt(summary.groupName, summary.date, messages)
-            val model = preferences.llmModel
+            val generator: SummaryGenerator = when (preferences.inferenceMode) {
+                UserPreferences.MODE_API -> apiGenerator
+                else -> if (localGenerator.isAvailable()) localGenerator else apiGenerator
+            }
+            val modelLabel = if (generator is ApiSummaryGenerator) preferences.llmModel else "gemma-3-1b-local"
 
-            anthropicClient.generateSummary(prompt, model)
+            val prompt = PromptBuilder.buildSummaryPrompt(summary.groupName, summary.date, messages)
+
+            generator.generateSummary(prompt)
                 .onSuccess { newContent ->
                     val updated = summary.copy(
                         content = newContent,
-                        modelUsed = model,
+                        modelUsed = modelLabel,
                         createdAt = System.currentTimeMillis()
                     )
                     summaryRepository.saveSummary(updated)

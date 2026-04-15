@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.whatsummary.data.llm.ModelDownloadManager
 import com.whatsummary.data.preferences.UserPreferences
 import com.whatsummary.data.repository.GroupRepository
 import com.whatsummary.data.repository.SummaryRepository
@@ -22,13 +23,19 @@ import javax.inject.Inject
 data class SettingsUiState(
     val summaryHour: Int = 22,
     val summaryMinute: Int = 0,
+    val inferenceMode: String = UserPreferences.MODE_LOCAL,
     val hasApiKey: Boolean = false,
     val llmModel: String = UserPreferences.MODEL_HAIKU,
     val retentionDays: Int = 30,
     val notificationServiceActive: Boolean = false,
     val showDeleteConfirmation: Boolean = false,
     val showTimePicker: Boolean = false,
-    val exportedJson: String? = null
+    val exportedJson: String? = null,
+    // Local model state
+    val modelDownloaded: Boolean = false,
+    val modelDownloading: Boolean = false,
+    val modelDownloadProgress: Float = 0f,
+    val modelSizeMb: Long = 0
 )
 
 @HiltViewModel
@@ -37,7 +44,8 @@ class SettingsViewModel @Inject constructor(
     private val preferences: UserPreferences,
     private val summaryScheduler: SummaryScheduler,
     private val summaryRepository: SummaryRepository,
-    private val groupRepository: GroupRepository
+    private val groupRepository: GroupRepository,
+    private val modelDownloadManager: ModelDownloadManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -45,6 +53,30 @@ class SettingsViewModel @Inject constructor(
 
     init {
         refreshState()
+        viewModelScope.launch {
+            modelDownloadManager.downloadState.collect { state ->
+                when (state) {
+                    is ModelDownloadManager.DownloadState.Downloading -> {
+                        _uiState.update {
+                            it.copy(modelDownloading = true, modelDownloadProgress = state.progress)
+                        }
+                    }
+                    is ModelDownloadManager.DownloadState.Completed -> {
+                        _uiState.update {
+                            it.copy(
+                                modelDownloaded = true,
+                                modelDownloading = false,
+                                modelSizeMb = modelDownloadManager.getModelSizeMb()
+                            )
+                        }
+                    }
+                    is ModelDownloadManager.DownloadState.Error -> {
+                        _uiState.update { it.copy(modelDownloading = false) }
+                    }
+                    is ModelDownloadManager.DownloadState.Idle -> {}
+                }
+            }
+        }
     }
 
     fun refreshState() {
@@ -55,12 +87,31 @@ class SettingsViewModel @Inject constructor(
             it.copy(
                 summaryHour = preferences.summaryTimeHour,
                 summaryMinute = preferences.summaryTimeMinute,
+                inferenceMode = preferences.inferenceMode,
                 hasApiKey = !preferences.apiKey.isNullOrBlank(),
                 llmModel = preferences.llmModel,
                 retentionDays = preferences.retentionDays,
-                notificationServiceActive = serviceActive
+                notificationServiceActive = serviceActive,
+                modelDownloaded = modelDownloadManager.isModelDownloaded(),
+                modelSizeMb = modelDownloadManager.getModelSizeMb()
             )
         }
+    }
+
+    fun updateInferenceMode(mode: String) {
+        preferences.inferenceMode = mode
+        _uiState.update { it.copy(inferenceMode = mode) }
+    }
+
+    fun downloadModel() {
+        viewModelScope.launch {
+            modelDownloadManager.downloadModel()
+        }
+    }
+
+    fun deleteModel() {
+        modelDownloadManager.deleteModel()
+        _uiState.update { it.copy(modelDownloaded = false, modelSizeMb = 0) }
     }
 
     fun updateSummaryTime(hour: Int, minute: Int) {

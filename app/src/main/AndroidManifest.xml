@@ -16,6 +16,11 @@
         android:theme="@style/Theme.Whatsummary"
         android:networkSecurityConfig="@xml/network_security_config">
 
+        <!-- Required for MediaPipe GPU inference -->
+        <uses-native-library android:name="libOpenCL.so" android:required="false" />
+        <uses-native-library android:name="libOpenCL-pixel.so" android:required="false" />
+        <uses-native-library android:name="libOpenCL-car.so" android:required="false" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

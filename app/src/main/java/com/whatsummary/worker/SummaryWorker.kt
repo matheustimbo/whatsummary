@@ -8,8 +8,10 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.whatsummary.R
 import com.whatsummary.WhatsummaryApp
-import com.whatsummary.data.api.AnthropicClient
 import com.whatsummary.data.db.entity.Summary
+import com.whatsummary.data.llm.ApiSummaryGenerator
+import com.whatsummary.data.llm.LocalSummaryGenerator
+import com.whatsummary.data.llm.SummaryGenerator
 import com.whatsummary.data.preferences.UserPreferences
 import com.whatsummary.data.repository.GroupRepository
 import com.whatsummary.data.repository.MessageRepository
@@ -26,17 +28,31 @@ class SummaryWorker @AssistedInject constructor(
     private val messageRepository: MessageRepository,
     private val summaryRepository: SummaryRepository,
     private val groupRepository: GroupRepository,
-    private val anthropicClient: AnthropicClient,
+    private val apiGenerator: ApiSummaryGenerator,
+    private val localGenerator: LocalSummaryGenerator,
     private val preferences: UserPreferences
 ) : CoroutineWorker(appContext, workerParams) {
 
     override suspend fun doWork(): Result {
-        val apiKey = preferences.apiKey
-        if (apiKey.isNullOrBlank()) return Result.failure()
+        val generator: SummaryGenerator = when (preferences.inferenceMode) {
+            UserPreferences.MODE_API -> {
+                if (!apiGenerator.isAvailable()) return Result.failure()
+                apiGenerator
+            }
+            else -> {
+                if (!localGenerator.isAvailable()) {
+                    // Fallback to API if local model not downloaded
+                    if (apiGenerator.isAvailable()) apiGenerator
+                    else return Result.failure()
+                } else {
+                    localGenerator
+                }
+            }
+        }
 
         val today = LocalDate.now()
         val dateStr = today.toString()
-        val model = preferences.llmModel
+        val modelLabel = if (generator is ApiSummaryGenerator) preferences.llmModel else "gemma-3-1b-local"
 
         return try {
             val enabledGroups = groupRepository.getEnabledGroups().take(MAX_GROUPS_PER_RUN)
@@ -52,7 +68,7 @@ class SummaryWorker @AssistedInject constructor(
                     messages = messages
                 )
 
-                val result = anthropicClient.generateSummary(prompt, model)
+                val result = generator.generateSummary(prompt)
                 if (result.isFailure) continue
                 val summaryText = result.getOrThrow()
 
@@ -62,7 +78,7 @@ class SummaryWorker @AssistedInject constructor(
                         date = dateStr,
                         content = summaryText,
                         messageCount = messages.size,
-                        modelUsed = model
+                        modelUsed = modelLabel
                     )
                 )
 

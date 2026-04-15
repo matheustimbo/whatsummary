@@ -15,14 +15,19 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.PhoneAndroid
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.outlined.ChatBubble
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -48,6 +53,10 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.whatsummary.R
+import com.whatsummary.data.llm.ModelDownloadManager
+import com.whatsummary.data.preferences.UserPreferences
+
+private const val TOTAL_STEPS = 5
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -71,19 +80,15 @@ fun OnboardingScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center
             ) {
-                repeat(4) { index ->
+                repeat(TOTAL_STEPS) { index ->
                     val color = if (index <= uiState.currentStep)
                         MaterialTheme.colorScheme.primary
                     else
                         MaterialTheme.colorScheme.surfaceVariant
                     androidx.compose.foundation.layout.Box(
                         modifier = Modifier
-                            .padding(horizontal = 4.dp)
-                            .size(width = 40.dp, height = 4.dp)
-                            .then(
-                                Modifier
-                                    .height(4.dp)
-                            )
+                            .padding(horizontal = 3.dp)
+                            .size(width = 32.dp, height = 4.dp)
                     ) {
                         androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize()) {
                             drawRoundRect(
@@ -113,14 +118,30 @@ fun OnboardingScreen(
                         },
                         onCheckPermission = { viewModel.checkNotificationPermission() }
                     )
-                    2 -> ApiKeyStep(
-                        apiKey = uiState.apiKey,
-                        apiKeyValid = uiState.apiKeyValid,
-                        testing = uiState.apiKeyTesting,
-                        onApiKeyChanged = viewModel::onApiKeyChanged,
-                        onTestKey = viewModel::testApiKey
+                    2 -> ModeSelectionStep(
+                        selectedMode = uiState.inferenceMode,
+                        onModeSelected = viewModel::onInferenceModeChanged
                     )
-                    3 -> ScheduleStep(
+                    3 -> {
+                        if (uiState.inferenceMode == UserPreferences.MODE_LOCAL) {
+                            LocalModelStep(
+                                downloaded = uiState.modelDownloaded,
+                                downloading = uiState.modelDownloading,
+                                progress = uiState.modelDownloadProgress,
+                                error = uiState.modelDownloadError,
+                                onDownload = viewModel::downloadModel
+                            )
+                        } else {
+                            ApiKeyStep(
+                                apiKey = uiState.apiKey,
+                                apiKeyValid = uiState.apiKeyValid,
+                                testing = uiState.apiKeyTesting,
+                                onApiKeyChanged = viewModel::onApiKeyChanged,
+                                onTestKey = viewModel::testApiKey
+                            )
+                        }
+                    }
+                    4 -> ScheduleStep(
                         hour = uiState.summaryHour,
                         minute = uiState.summaryMinute,
                         onTimeChanged = viewModel::onTimeChanged
@@ -143,14 +164,10 @@ fun OnboardingScreen(
                     Spacer(modifier = Modifier.weight(1f))
                 }
 
-                if (uiState.currentStep < 3) {
+                if (uiState.currentStep < TOTAL_STEPS - 1) {
                     Button(
                         onClick = { viewModel.nextStep() },
-                        enabled = when (uiState.currentStep) {
-                            1 -> uiState.notificationPermissionGranted
-                            2 -> uiState.apiKeyValid == true
-                            else -> true
-                        }
+                        enabled = viewModel.canAdvanceFromStep()
                     ) {
                         Text(stringResource(R.string.onboarding_next))
                     }
@@ -278,6 +295,184 @@ private fun NotificationStep(
 }
 
 @Composable
+private fun ModeSelectionStep(
+    selectedMode: String,
+    onModeSelected: (String) -> Unit
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(
+            text = stringResource(R.string.onboarding_mode_title),
+            style = MaterialTheme.typography.headlineMedium,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = stringResource(R.string.onboarding_mode_description),
+            style = MaterialTheme.typography.bodyLarge,
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Local mode card
+        ModeCard(
+            selected = selectedMode == UserPreferences.MODE_LOCAL,
+            icon = Icons.Default.PhoneAndroid,
+            title = stringResource(R.string.onboarding_mode_local_title),
+            description = stringResource(R.string.onboarding_mode_local_description),
+            onClick = { onModeSelected(UserPreferences.MODE_LOCAL) }
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // API mode card
+        ModeCard(
+            selected = selectedMode == UserPreferences.MODE_API,
+            icon = Icons.Default.Cloud,
+            title = stringResource(R.string.onboarding_mode_api_title),
+            description = stringResource(R.string.onboarding_mode_api_description),
+            onClick = { onModeSelected(UserPreferences.MODE_API) }
+        )
+    }
+}
+
+@Composable
+private fun ModeCard(
+    selected: Boolean,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    title: String,
+    description: String,
+    onClick: () -> Unit
+) {
+    Card(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = if (selected)
+                MaterialTheme.colorScheme.primaryContainer
+            else
+                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        ),
+        border = if (selected) androidx.compose.foundation.BorderStroke(
+            2.dp, MaterialTheme.colorScheme.primary
+        ) else null
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(40.dp),
+                tint = if (selected) MaterialTheme.colorScheme.primary
+                else MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.size(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            if (selected) {
+                Icon(
+                    imageVector = Icons.Default.CheckCircle,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun LocalModelStep(
+    downloaded: Boolean,
+    downloading: Boolean,
+    progress: Float,
+    error: String?,
+    onDownload: () -> Unit
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Icon(
+            imageVector = Icons.Default.PhoneAndroid,
+            contentDescription = null,
+            modifier = Modifier.size(64.dp),
+            tint = MaterialTheme.colorScheme.primary
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+        Text(
+            text = stringResource(R.string.onboarding_local_title),
+            style = MaterialTheme.typography.headlineMedium,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = stringResource(R.string.onboarding_local_description, ModelDownloadManager.MODEL_SIZE_MB),
+            style = MaterialTheme.typography.bodyLarge,
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+
+        when {
+            downloaded -> {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.size(8.dp))
+                    Text(
+                        text = stringResource(R.string.onboarding_local_ready),
+                        color = MaterialTheme.colorScheme.primary,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                }
+            }
+            downloading -> {
+                Text(
+                    text = stringResource(R.string.onboarding_local_downloading, (progress * 100).toInt()),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                LinearProgressIndicator(
+                    progress = { progress },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+            else -> {
+                if (error != null) {
+                    Text(
+                        text = error,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
+                Button(onClick = onDownload) {
+                    Text(stringResource(R.string.onboarding_local_download))
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun ApiKeyStep(
     apiKey: String,
     apiKeyValid: Boolean?,
@@ -290,7 +485,7 @@ private fun ApiKeyStep(
         modifier = Modifier.fillMaxWidth()
     ) {
         Icon(
-            imageVector = Icons.Default.Lock,
+            imageVector = Icons.Default.Cloud,
             contentDescription = null,
             modifier = Modifier.size(64.dp),
             tint = MaterialTheme.colorScheme.primary

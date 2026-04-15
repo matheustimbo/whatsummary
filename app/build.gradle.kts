@@ -95,4 +95,7 @@ dependencies {
     implementation(libs.security.crypto)
     implementation(libs.sqlcipher)
     implementation(libs.sqlite)
+
+    // On-device LLM
+    implementation(libs.mediapipe.genai)
 }

@@ -47,6 +47,10 @@ class UserPreferences @Inject constructor(
         get() = prefs.getBoolean(KEY_ONBOARDING_COMPLETED, false)
         set(value) = prefs.edit().putBoolean(KEY_ONBOARDING_COMPLETED, value).apply()
 
+    var inferenceMode: String
+        get() = prefs.getString(KEY_INFERENCE_MODE, MODE_LOCAL) ?: MODE_LOCAL
+        set(value) = prefs.edit().putString(KEY_INFERENCE_MODE, value).apply()
+
     val dbPassphrase: String
         get() {
             val existing = prefs.getString(KEY_DB_PASSPHRASE, null)
@@ -68,6 +72,10 @@ class UserPreferences @Inject constructor(
         private const val KEY_RETENTION_DAYS = "retention_days"
         private const val KEY_ONBOARDING_COMPLETED = "onboarding_completed"
         private const val KEY_DB_PASSPHRASE = "db_passphrase"
+        private const val KEY_INFERENCE_MODE = "inference_mode"
+
+        const val MODE_LOCAL = "local"
+        const val MODE_API = "api"
 
         const val MODEL_HAIKU = "claude-haiku-4-5-20251001"
         const val MODEL_SONNET = "claude-sonnet-4-5-20241022"

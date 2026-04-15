@@ -16,6 +16,21 @@
     <string name="onboarding_apikey_test">Testar Chave</string>
     <string name="onboarding_apikey_valid">Chave válida!</string>
     <string name="onboarding_apikey_invalid">Chave inválida. Verifique e tente novamente.</string>
+    <!-- Onboarding - Mode selection -->
+    <string name="onboarding_mode_title">Como gerar os resumos?</string>
+    <string name="onboarding_mode_description">Escolha entre processar no seu aparelho ou usar a API na nuvem.</string>
+    <string name="onboarding_mode_local_title">No aparelho (recomendado)</string>
+    <string name="onboarding_mode_local_description">Grátis e 100%% privado. Usa IA direto no seu celular. Requer download de ~657 MB.</string>
+    <string name="onboarding_mode_api_title">API na nuvem (Anthropic)</string>
+    <string name="onboarding_mode_api_description">Resumos de maior qualidade. Requer chave de API e tem custo (~$0.01/resumo).</string>
+
+    <!-- Onboarding - Local model -->
+    <string name="onboarding_local_title">Modelo Local</string>
+    <string name="onboarding_local_description">Precisamos baixar o modelo de IA Gemma 3 (~%d MB). Isso é feito apenas uma vez.</string>
+    <string name="onboarding_local_download">Baixar Modelo</string>
+    <string name="onboarding_local_downloading">Baixando… %d%%</string>
+    <string name="onboarding_local_ready">Modelo pronto!</string>
+
     <string name="onboarding_schedule_title">Horário do Resumo</string>
     <string name="onboarding_schedule_description">Escolha o horário em que deseja receber o resumo diário.</string>
     <string name="onboarding_next">Próximo</string>
@@ -49,7 +64,17 @@
     <string name="settings_api_key_configured">Configurada</string>
     <string name="settings_api_key_not_configured">Não configurada</string>
     <string name="settings_api_key_change">Alterar chave</string>
-    <string name="settings_model">Modelo de IA</string>
+    <string name="settings_inference_mode">Modo de inferência</string>
+    <string name="settings_mode_local">No aparelho</string>
+    <string name="settings_mode_local_description">Grátis, 100%% privado, usa Gemma 3</string>
+    <string name="settings_mode_api">API na nuvem</string>
+    <string name="settings_mode_api_description">Resumos melhores, requer chave de API</string>
+    <string name="settings_local_model">Modelo local</string>
+    <string name="settings_local_model_downloaded">Baixado (%d MB)</string>
+    <string name="settings_local_model_not_downloaded">Não baixado</string>
+    <string name="settings_local_model_download">Baixar modelo</string>
+    <string name="settings_local_model_delete">Apagar modelo</string>
+    <string name="settings_model">Modelo de IA (nuvem)</string>
     <string name="settings_model_haiku">Haiku (mais rápido e econômico)</string>
     <string name="settings_model_sonnet">Sonnet (resumos mais detalhados)</string>
     <string name="settings_retention">Retenção de dados</string>

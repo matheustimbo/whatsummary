@@ -21,6 +21,9 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -168,19 +171,113 @@ fun SettingsScreen(
                 }
             }
 
-            // API Key
-            SettingsSection(title = stringResource(R.string.settings_api_key)) {
-                Text(
-                    text = if (uiState.hasApiKey) stringResource(R.string.settings_api_key_configured)
-                    else stringResource(R.string.settings_api_key_not_configured),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = if (uiState.hasApiKey) MaterialTheme.colorScheme.primary
-                    else MaterialTheme.colorScheme.error
-                )
+            // Inference mode
+            SettingsSection(title = stringResource(R.string.settings_inference_mode)) {
+                Column {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { viewModel.updateInferenceMode(UserPreferences.MODE_LOCAL) }
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = uiState.inferenceMode == UserPreferences.MODE_LOCAL,
+                            onClick = { viewModel.updateInferenceMode(UserPreferences.MODE_LOCAL) }
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Column {
+                            Text(
+                                text = stringResource(R.string.settings_mode_local),
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            Text(
+                                text = stringResource(R.string.settings_mode_local_description),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { viewModel.updateInferenceMode(UserPreferences.MODE_API) }
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = uiState.inferenceMode == UserPreferences.MODE_API,
+                            onClick = { viewModel.updateInferenceMode(UserPreferences.MODE_API) }
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Column {
+                            Text(
+                                text = stringResource(R.string.settings_mode_api),
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            Text(
+                                text = stringResource(R.string.settings_mode_api_description),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
             }
 
-            // Model selection
-            SettingsSection(title = stringResource(R.string.settings_model)) {
+            // Local model management (visible when local mode)
+            if (uiState.inferenceMode == UserPreferences.MODE_LOCAL) {
+                SettingsSection(title = stringResource(R.string.settings_local_model)) {
+                    if (uiState.modelDownloaded) {
+                        Text(
+                            text = stringResource(R.string.settings_local_model_downloaded, uiState.modelSizeMb),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedButton(onClick = { viewModel.deleteModel() }) {
+                            Text(stringResource(R.string.settings_local_model_delete))
+                        }
+                    } else if (uiState.modelDownloading) {
+                        Text(
+                            text = stringResource(R.string.onboarding_local_downloading, (uiState.modelDownloadProgress * 100).toInt()),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        LinearProgressIndicator(
+                            progress = { uiState.modelDownloadProgress },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    } else {
+                        Text(
+                            text = stringResource(R.string.settings_local_model_not_downloaded),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(onClick = { viewModel.downloadModel() }) {
+                            Text(stringResource(R.string.settings_local_model_download))
+                        }
+                    }
+                }
+            }
+
+            // API Key (visible when API mode)
+            if (uiState.inferenceMode == UserPreferences.MODE_API) {
+                SettingsSection(title = stringResource(R.string.settings_api_key)) {
+                    Text(
+                        text = if (uiState.hasApiKey) stringResource(R.string.settings_api_key_configured)
+                        else stringResource(R.string.settings_api_key_not_configured),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = if (uiState.hasApiKey) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.error
+                    )
+                }
+            }
+
+            // Model selection (visible when API mode)
+            if (uiState.inferenceMode == UserPreferences.MODE_API) {
+                SettingsSection(title = stringResource(R.string.settings_model)) {
                 Column {
                     Row(
                         modifier = Modifier
@@ -217,6 +314,7 @@ fun SettingsScreen(
                         )
                     }
                 }
+            }
             }
 
             // Data retention
