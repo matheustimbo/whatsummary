@@ -7,7 +7,6 @@ import androidx.lifecycle.viewModelScope
 import com.whatsummary.data.api.AnthropicClient
 import com.whatsummary.data.llm.ModelDownloadManager
 import com.whatsummary.data.preferences.UserPreferences
-import com.whatsummary.worker.SummaryScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,7 +21,7 @@ data class OnboardingUiState(
     val notificationPermissionGranted: Boolean = false,
     // Step 2: Mode selection
     val inferenceMode: String = UserPreferences.MODE_LOCAL,
-    // Step 3a: Local model download
+    // Step 3a: Local model
     val modelDownloadProgress: Float = 0f,
     val modelDownloaded: Boolean = false,
     val modelDownloading: Boolean = false,
@@ -30,10 +29,7 @@ data class OnboardingUiState(
     // Step 3b: API key (if API mode)
     val apiKey: String = "",
     val apiKeyValid: Boolean? = null,
-    val apiKeyTesting: Boolean = false,
-    // Step 4: Schedule
-    val summaryHour: Int = 22,
-    val summaryMinute: Int = 0
+    val apiKeyTesting: Boolean = false
 )
 
 @HiltViewModel
@@ -41,13 +37,12 @@ class OnboardingViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val preferences: UserPreferences,
     private val anthropicClient: AnthropicClient,
-    private val summaryScheduler: SummaryScheduler,
     private val modelDownloadManager: ModelDownloadManager
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(OnboardingUiState(
-        modelDownloaded = modelDownloadManager.isModelDownloaded()
-    ))
+    private val _uiState = MutableStateFlow(
+        OnboardingUiState(modelDownloaded = modelDownloadManager.isModelDownloaded())
+    )
     val uiState: StateFlow<OnboardingUiState> = _uiState.asStateFlow()
 
     init {
@@ -115,10 +110,6 @@ class OnboardingViewModel @Inject constructor(
         }
     }
 
-    fun onTimeChanged(hour: Int, minute: Int) {
-        _uiState.update { it.copy(summaryHour = hour, summaryMinute = minute) }
-    }
-
     fun nextStep() {
         _uiState.update { it.copy(currentStep = it.currentStep + 1) }
     }
@@ -147,9 +138,6 @@ class OnboardingViewModel @Inject constructor(
         if (state.inferenceMode == UserPreferences.MODE_API) {
             preferences.apiKey = state.apiKey.trim()
         }
-        preferences.summaryTimeHour = state.summaryHour
-        preferences.summaryTimeMinute = state.summaryMinute
         preferences.onboardingCompleted = true
-        summaryScheduler.schedule()
     }
 }

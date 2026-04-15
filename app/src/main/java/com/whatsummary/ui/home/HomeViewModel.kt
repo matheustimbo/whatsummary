@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.whatsummary.data.db.entity.Summary
 import com.whatsummary.data.repository.SummaryRepository
+import com.whatsummary.worker.SummaryScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,12 +17,14 @@ import javax.inject.Inject
 data class HomeUiState(
     val summaries: List<Summary> = emptyList(),
     val isLoading: Boolean = true,
-    val error: String? = null
+    val error: String? = null,
+    val justQueuedSummary: Boolean = false
 )
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val summaryRepository: SummaryRepository
+    private val summaryRepository: SummaryRepository,
+    private val summaryScheduler: SummaryScheduler
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -35,6 +38,17 @@ class HomeViewModel @Inject constructor(
                     _uiState.update { it.copy(summaries = summaries, isLoading = false) }
                 }
         }
+    }
+
+    fun summarizeNow() {
+        viewModelScope.launch {
+            summaryScheduler.runOnce()
+            _uiState.update { it.copy(justQueuedSummary = true) }
+        }
+    }
+
+    fun consumeQueuedFlag() {
+        _uiState.update { it.copy(justQueuedSummary = false) }
     }
 
     fun clearError() {

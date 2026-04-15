@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -19,9 +20,7 @@ import javax.inject.Inject
 data class GroupMessagesUiState(
     val groupName: String = "",
     val messages: List<CapturedMessage> = emptyList(),
-    val isLoading: Boolean = true,
-    val isSummarizing: Boolean = false,
-    val justQueuedSummary: Boolean = false
+    val isLoading: Boolean = true
 )
 
 @HiltViewModel
@@ -31,39 +30,38 @@ class GroupMessagesViewModel @Inject constructor(
     private val summaryScheduler: SummaryScheduler
 ) : ViewModel() {
 
-    private val groupName: String = Uri.decode(savedStateHandle["groupName"] ?: "")
+    // Nav library already URL-decodes path args when they're typed as StringType,
+    // but we defensively decode once in case any caller stores a raw value.
+    private val groupName: String = savedStateHandle.get<String>("groupName")
+        ?.let { runCatching { Uri.decode(it) }.getOrDefault(it) }
+        ?: ""
 
     val uiState: StateFlow<GroupMessagesUiState> = messageRepository
         .observeRecentMessages(groupName, days = 7)
-        .let { flow ->
-            kotlinx.coroutines.flow.combine(
-                flow,
-                MutableStateFlow(Unit)
-            ) { messages, _ ->
-                GroupMessagesUiState(
-                    groupName = groupName,
-                    messages = messages,
-                    isLoading = false
-                )
-            }
+        .map { messages ->
+            GroupMessagesUiState(
+                groupName = groupName,
+                messages = messages,
+                isLoading = false
+            )
         }
         .stateIn(
             scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
+            started = SharingStarted.WhileSubscribed(5_000),
             initialValue = GroupMessagesUiState(groupName = groupName)
         )
 
-    private val _actionState = MutableStateFlow(false)
-    val justQueuedSummary: StateFlow<Boolean> = _actionState.asStateFlow()
+    private val _justQueuedSummary = MutableStateFlow(false)
+    val justQueuedSummary: StateFlow<Boolean> = _justQueuedSummary.asStateFlow()
 
     fun summarizeNow() {
         viewModelScope.launch {
             summaryScheduler.runOnce()
-            _actionState.value = true
+            _justQueuedSummary.value = true
         }
     }
 
     fun consumeQueuedFlag() {
-        _actionState.value = false
+        _justQueuedSummary.value = false
     }
 }

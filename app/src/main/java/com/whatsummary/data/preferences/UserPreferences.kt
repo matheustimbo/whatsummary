@@ -27,14 +27,6 @@ class UserPreferences @Inject constructor(
         get() = prefs.getString(KEY_API_KEY, null)
         set(value) = prefs.edit().putString(KEY_API_KEY, value).apply()
 
-    var summaryTimeHour: Int
-        get() = prefs.getInt(KEY_SUMMARY_HOUR, 22)
-        set(value) = prefs.edit().putInt(KEY_SUMMARY_HOUR, value).apply()
-
-    var summaryTimeMinute: Int
-        get() = prefs.getInt(KEY_SUMMARY_MINUTE, 0)
-        set(value) = prefs.edit().putInt(KEY_SUMMARY_MINUTE, value).apply()
-
     var llmModel: String
         get() = prefs.getString(KEY_LLM_MODEL, MODEL_HAIKU) ?: MODEL_HAIKU
         set(value) = prefs.edit().putString(KEY_LLM_MODEL, value).apply()
@@ -66,8 +58,6 @@ class UserPreferences @Inject constructor(
 
     companion object {
         private const val KEY_API_KEY = "api_key"
-        private const val KEY_SUMMARY_HOUR = "summary_hour"
-        private const val KEY_SUMMARY_MINUTE = "summary_minute"
         private const val KEY_LLM_MODEL = "llm_model"
         private const val KEY_RETENTION_DAYS = "retention_days"
         private const val KEY_ONBOARDING_COMPLETED = "onboarding_completed"

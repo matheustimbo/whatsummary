@@ -1,65 +1,23 @@
 package com.whatsummary.worker
 
 import android.content.Context
-import androidx.work.BackoffPolicy
 import androidx.work.Constraints
-import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
-import com.whatsummary.data.preferences.UserPreferences
 import dagger.hilt.android.qualifiers.ApplicationContext
-import java.time.Duration
-import java.time.LocalDateTime
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class SummaryScheduler @Inject constructor(
-    @ApplicationContext private val context: Context,
-    private val preferences: UserPreferences
+    @ApplicationContext private val context: Context
 ) {
 
-    fun schedule() {
-        val hour = preferences.summaryTimeHour
-        val minute = preferences.summaryTimeMinute
-
-        val now = LocalDateTime.now()
-        var target = now.withHour(hour).withMinute(minute).withSecond(0).withNano(0)
-        if (!target.isAfter(now)) {
-            target = target.plusDays(1)
-        }
-
-        val initialDelay = Duration.between(now, target)
-
-        val request = PeriodicWorkRequestBuilder<SummaryWorker>(1, TimeUnit.DAYS)
-            .setInitialDelay(initialDelay.toMillis(), TimeUnit.MILLISECONDS)
-            .setConstraints(
-                Constraints.Builder()
-                    .setRequiredNetworkType(NetworkType.CONNECTED)
-                    .build()
-            )
-            .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 15, TimeUnit.MINUTES)
-            .build()
-
-        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
-            WORK_NAME,
-            ExistingPeriodicWorkPolicy.UPDATE,
-            request
-        )
-    }
-
-    fun cancel() {
-        WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME)
-    }
-
     /**
-     * Triggers a one-off run of the SummaryWorker immediately (used by the
-     * "Resumir agora" button in the messages screen). Doesn't replace the
-     * scheduled daily run.
+     * Triggers a one-off run of the SummaryWorker immediately.
+     * Used by the "Resumir agora" buttons in the UI.
      */
     fun runOnce() {
         val request = OneTimeWorkRequestBuilder<SummaryWorker>()
@@ -78,7 +36,6 @@ class SummaryScheduler @Inject constructor(
     }
 
     companion object {
-        const val WORK_NAME = "daily_summary"
         const val ONE_OFF_WORK_NAME = "one_off_summary"
     }
 }

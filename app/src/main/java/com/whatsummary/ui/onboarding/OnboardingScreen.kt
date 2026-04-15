@@ -19,7 +19,6 @@ import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.PhoneAndroid
-import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.outlined.ChatBubble
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -34,8 +33,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TimePicker
-import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -56,7 +53,7 @@ import com.whatsummary.R
 import com.whatsummary.data.llm.ModelDownloadManager
 import com.whatsummary.data.preferences.UserPreferences
 
-private const val TOTAL_STEPS = 5
+private const val TOTAL_STEPS = 4
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -141,11 +138,6 @@ fun OnboardingScreen(
                             )
                         }
                     }
-                    4 -> ScheduleStep(
-                        hour = uiState.summaryHour,
-                        minute = uiState.summaryMinute,
-                        onTimeChanged = viewModel::onTimeChanged
-                    )
                 }
             }
 
@@ -555,48 +547,3 @@ private fun ApiKeyStep(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun ScheduleStep(
-    hour: Int,
-    minute: Int,
-    onTimeChanged: (Int, Int) -> Unit
-) {
-    val timePickerState = rememberTimePickerState(
-        initialHour = hour,
-        initialMinute = minute,
-        is24Hour = true
-    )
-
-    LaunchedEffect(timePickerState.hour, timePickerState.minute) {
-        onTimeChanged(timePickerState.hour, timePickerState.minute)
-    }
-
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Icon(
-            imageVector = Icons.Default.Schedule,
-            contentDescription = null,
-            modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.primary
-        )
-        Spacer(modifier = Modifier.height(24.dp))
-        Text(
-            text = stringResource(R.string.onboarding_schedule_title),
-            style = MaterialTheme.typography.headlineMedium,
-            textAlign = TextAlign.Center
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = stringResource(R.string.onboarding_schedule_description),
-            style = MaterialTheme.typography.bodyLarge,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(modifier = Modifier.height(24.dp))
-
-        TimePicker(state = timePickerState)
-    }
-}

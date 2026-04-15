@@ -21,7 +21,6 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.FileDownload
-import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -38,9 +37,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -158,27 +155,6 @@ fun SettingsScreen(
                             else stringResource(R.string.settings_notification_inactive),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            }
-
-            // Summary time
-            SettingsSection(title = stringResource(R.string.settings_summary_time)) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { viewModel.showTimePicker() }
-                        .padding(vertical = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Schedule, contentDescription = null)
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(
-                            text = String.format("%02d:%02d", uiState.summaryHour, uiState.summaryMinute),
-                            style = MaterialTheme.typography.bodyLarge
                         )
                     }
                 }
@@ -430,32 +406,6 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
         }
-    }
-
-    // Time picker dialog
-    if (uiState.showTimePicker) {
-        val timePickerState = rememberTimePickerState(
-            initialHour = uiState.summaryHour,
-            initialMinute = uiState.summaryMinute,
-            is24Hour = true
-        )
-        AlertDialog(
-            onDismissRequest = { viewModel.dismissTimePicker() },
-            title = { Text(stringResource(R.string.settings_summary_time)) },
-            text = { TimePicker(state = timePickerState) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.updateSummaryTime(timePickerState.hour, timePickerState.minute)
-                    }
-                ) { Text(stringResource(R.string.confirm)) }
-            },
-            dismissButton = {
-                TextButton(onClick = { viewModel.dismissTimePicker() }) {
-                    Text(stringResource(R.string.cancel))
-                }
-            }
-        )
     }
 
     // Delete confirmation dialog

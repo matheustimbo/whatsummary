@@ -9,7 +9,6 @@ import com.whatsummary.data.preferences.UserPreferences
 import com.whatsummary.ui.navigation.Screen
 import com.whatsummary.ui.navigation.WhatsummaryNavHost
 import com.whatsummary.ui.theme.WhatsummaryTheme
-import com.whatsummary.worker.SummaryScheduler
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -19,15 +18,11 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var preferences: UserPreferences
 
-    @Inject
-    lateinit var summaryScheduler: SummaryScheduler
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
         val startDestination = if (preferences.onboardingCompleted) {
-            summaryScheduler.schedule()
             Screen.Home.route
         } else {
             Screen.Onboarding.route

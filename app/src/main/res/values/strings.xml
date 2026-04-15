@@ -41,10 +41,11 @@
     <!-- Home -->
     <string name="home_title">Resumos</string>
     <string name="home_empty_title">Nenhum resumo ainda</string>
-    <string name="home_empty_description">As mensagens estão sendo coletadas — seu primeiro resumo chegará hoje à noite.</string>
+    <string name="home_empty_description">As mensagens dos seus grupos estão sendo coletadas. Toque no botão "Resumir agora" para gerar um resumo a qualquer momento.</string>
     <string name="home_today">Hoje</string>
     <string name="home_yesterday">Ontem</string>
     <string name="home_messages_count">%d mensagens</string>
+    <string name="home_summarize_now">Resumir agora</string>
 
     <!-- Summary Detail -->
     <string name="summary_share">Compartilhar</string>

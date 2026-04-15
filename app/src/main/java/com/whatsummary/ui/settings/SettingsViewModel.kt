@@ -9,7 +9,6 @@ import com.whatsummary.data.preferences.UserPreferences
 import com.whatsummary.data.repository.GroupRepository
 import com.whatsummary.data.repository.SummaryRepository
 import com.whatsummary.util.FileLogger
-import com.whatsummary.worker.SummaryScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,15 +21,12 @@ import org.json.JSONObject
 import javax.inject.Inject
 
 data class SettingsUiState(
-    val summaryHour: Int = 22,
-    val summaryMinute: Int = 0,
     val inferenceMode: String = UserPreferences.MODE_LOCAL,
     val hasApiKey: Boolean = false,
     val llmModel: String = UserPreferences.MODEL_HAIKU,
     val retentionDays: Int = 30,
     val notificationServiceActive: Boolean = false,
     val showDeleteConfirmation: Boolean = false,
-    val showTimePicker: Boolean = false,
     val exportedJson: String? = null,
     val exportedLogs: String? = null,
     // Local model state
@@ -44,7 +40,6 @@ data class SettingsUiState(
 class SettingsViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val preferences: UserPreferences,
-    private val summaryScheduler: SummaryScheduler,
     private val summaryRepository: SummaryRepository,
     private val groupRepository: GroupRepository,
     private val modelDownloadManager: ModelDownloadManager,
@@ -88,8 +83,6 @@ class SettingsViewModel @Inject constructor(
 
         _uiState.update {
             it.copy(
-                summaryHour = preferences.summaryTimeHour,
-                summaryMinute = preferences.summaryTimeMinute,
                 inferenceMode = preferences.inferenceMode,
                 hasApiKey = !preferences.apiKey.isNullOrBlank(),
                 llmModel = preferences.llmModel,
@@ -117,13 +110,6 @@ class SettingsViewModel @Inject constructor(
         _uiState.update { it.copy(modelDownloaded = false, modelSizeMb = 0) }
     }
 
-    fun updateSummaryTime(hour: Int, minute: Int) {
-        preferences.summaryTimeHour = hour
-        preferences.summaryTimeMinute = minute
-        summaryScheduler.schedule()
-        _uiState.update { it.copy(summaryHour = hour, summaryMinute = minute, showTimePicker = false) }
-    }
-
     fun updateApiKey(key: String) {
         preferences.apiKey = key.ifBlank { null }
         _uiState.update { it.copy(hasApiKey = key.isNotBlank()) }
@@ -145,14 +131,6 @@ class SettingsViewModel @Inject constructor(
 
     fun dismissDeleteConfirmation() {
         _uiState.update { it.copy(showDeleteConfirmation = false) }
-    }
-
-    fun showTimePicker() {
-        _uiState.update { it.copy(showTimePicker = true) }
-    }
-
-    fun dismissTimePicker() {
-        _uiState.update { it.copy(showTimePicker = false) }
     }
 
     fun deleteAllData() {
