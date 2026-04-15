@@ -26,6 +26,21 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Download Gemma 3 1B model (bundled in APK)
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          if [ -z "$HF_TOKEN" ]; then
+            echo "::error::HF_TOKEN secret is required. Create one at https://huggingface.co/settings/tokens and add it as a GitHub secret."
+            exit 1
+          fi
+          mkdir -p app/src/main/assets/models
+          curl -L --fail \
+            -H "Authorization: Bearer $HF_TOKEN" \
+            "https://huggingface.co/litert-community/Gemma3-1B-IT/resolve/main/gemma3-1b-it-int4.task" \
+            -o app/src/main/assets/models/gemma3-1b-it-int4.task
+          ls -lh app/src/main/assets/models/
+
       - name: Build debug APK
         run: ./gradlew assembleDebug
 

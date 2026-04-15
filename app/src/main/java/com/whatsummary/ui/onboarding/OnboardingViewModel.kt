@@ -89,9 +89,9 @@ class OnboardingViewModel @Inject constructor(
         _uiState.update { it.copy(inferenceMode = mode) }
     }
 
-    fun downloadModel() {
+    fun extractModel() {
         viewModelScope.launch {
-            modelDownloadManager.downloadModel()
+            modelDownloadManager.ensureModel()
         }
     }
 

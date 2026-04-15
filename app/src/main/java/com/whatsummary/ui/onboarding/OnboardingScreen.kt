@@ -129,7 +129,7 @@ fun OnboardingScreen(
                                 downloading = uiState.modelDownloading,
                                 progress = uiState.modelDownloadProgress,
                                 error = uiState.modelDownloadError,
-                                onDownload = viewModel::downloadModel
+                                onDownload = viewModel::extractModel
                             )
                         } else {
                             ApiKeyStep(
@@ -403,6 +403,13 @@ private fun LocalModelStep(
     error: String?,
     onDownload: () -> Unit
 ) {
+    // Auto-extract bundled model when this step appears
+    LaunchedEffect(Unit) {
+        if (!downloaded && !downloading) {
+            onDownload()
+        }
+    }
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxWidth()
@@ -420,16 +427,16 @@ private fun LocalModelStep(
             textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = stringResource(R.string.onboarding_local_description, ModelDownloadManager.MODEL_SIZE_MB),
-            style = MaterialTheme.typography.bodyLarge,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(modifier = Modifier.height(24.dp))
 
         when {
             downloaded -> {
+                Text(
+                    text = stringResource(R.string.onboarding_local_bundled_info),
+                    style = MaterialTheme.typography.bodyLarge,
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(24.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Default.CheckCircle,
@@ -446,10 +453,12 @@ private fun LocalModelStep(
             }
             downloading -> {
                 Text(
-                    text = stringResource(R.string.onboarding_local_downloading, (progress * 100).toInt()),
-                    style = MaterialTheme.typography.bodyMedium
+                    text = stringResource(R.string.onboarding_local_extracting),
+                    style = MaterialTheme.typography.bodyLarge,
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(24.dp))
                 LinearProgressIndicator(
                     progress = { progress },
                     modifier = Modifier.fillMaxWidth()
@@ -463,9 +472,9 @@ private fun LocalModelStep(
                         color = MaterialTheme.colorScheme.error
                     )
                     Spacer(modifier = Modifier.height(12.dp))
-                }
-                Button(onClick = onDownload) {
-                    Text(stringResource(R.string.onboarding_local_download))
+                    Button(onClick = onDownload) {
+                        Text(stringResource(R.string.onboarding_local_retry))
+                    }
                 }
             }
         }

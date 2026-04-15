@@ -42,6 +42,21 @@ android {
         compose = true
     }
 
+    // MediaPipe needs to mmap .task files — they must NOT be compressed in the APK
+    androidResources {
+        @Suppress("UnstableApiUsage")
+        noCompress += listOf("task", "bin")
+    }
+
+    packaging {
+        resources {
+            excludes += listOf(
+                "/META-INF/{AL2.0,LGPL2.1}",
+                "/META-INF/DEPENDENCIES"
+            )
+        }
+    }
+
     ksp {
         arg("room.schemaLocation", "$projectDir/schemas")
     }

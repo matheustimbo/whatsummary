@@ -240,7 +240,7 @@ fun SettingsScreen(
                         }
                     } else if (uiState.modelDownloading) {
                         Text(
-                            text = stringResource(R.string.onboarding_local_downloading, (uiState.modelDownloadProgress * 100).toInt()),
+                            text = stringResource(R.string.onboarding_local_extracting),
                             style = MaterialTheme.typography.bodyMedium
                         )
                         Spacer(modifier = Modifier.height(8.dp))
@@ -255,7 +255,7 @@ fun SettingsScreen(
                             color = MaterialTheme.colorScheme.error
                         )
                         Spacer(modifier = Modifier.height(8.dp))
-                        Button(onClick = { viewModel.downloadModel() }) {
+                        Button(onClick = { viewModel.extractModel() }) {
                             Text(stringResource(R.string.settings_local_model_download))
                         }
                     }

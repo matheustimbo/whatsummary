@@ -20,16 +20,17 @@
     <string name="onboarding_mode_title">Como gerar os resumos?</string>
     <string name="onboarding_mode_description">Escolha entre processar no seu aparelho ou usar a API na nuvem.</string>
     <string name="onboarding_mode_local_title">No aparelho (recomendado)</string>
-    <string name="onboarding_mode_local_description">Grátis e 100%% privado. Usa IA direto no seu celular. Requer download de ~657 MB.</string>
+    <string name="onboarding_mode_local_description">Grátis e 100%% privado. Usa Gemma 3 direto no seu celular.</string>
     <string name="onboarding_mode_api_title">API na nuvem (Anthropic)</string>
     <string name="onboarding_mode_api_description">Resumos de maior qualidade. Requer chave de API e tem custo (~$0.01/resumo).</string>
 
     <!-- Onboarding - Local model -->
     <string name="onboarding_local_title">Modelo Local</string>
-    <string name="onboarding_local_description">Precisamos baixar o modelo de IA Gemma 3 (~%d MB). Isso é feito apenas uma vez.</string>
-    <string name="onboarding_local_download">Baixar Modelo</string>
-    <string name="onboarding_local_downloading">Baixando… %d%%</string>
-    <string name="onboarding_local_ready">Modelo pronto!</string>
+    <string name="onboarding_local_description">Preparando o modelo Gemma 3 para uso no aparelho.</string>
+    <string name="onboarding_local_extracting">Preparando modelo Gemma 3… Isso leva alguns segundos.</string>
+    <string name="onboarding_local_ready">Gemma 3 pronto!</string>
+    <string name="onboarding_local_bundled_info">O modelo Gemma 3 está incluído no app e roda 100%% no seu aparelho, sem internet.</string>
+    <string name="onboarding_local_retry">Tentar novamente</string>
 
     <string name="onboarding_schedule_title">Horário do Resumo</string>
     <string name="onboarding_schedule_description">Escolha o horário em que deseja receber o resumo diário.</string>
