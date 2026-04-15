@@ -82,6 +82,8 @@
     <string name="settings_retention_days">%d dias</string>
     <string name="settings_export">Exportar dados</string>
     <string name="settings_export_description">Exportar todos os resumos em JSON</string>
+    <string name="settings_export_logs">Exportar logs</string>
+    <string name="settings_export_logs_description">Compartilhar arquivo de log para debug</string>
     <string name="settings_delete_all">Apagar todos os dados</string>
     <string name="settings_delete_all_confirm">Tem certeza? Isso apagará todas as mensagens, resumos e configurações. Esta ação não pode ser desfeita.</string>
     <string name="settings_delete_all_done">Dados apagados com sucesso</string>

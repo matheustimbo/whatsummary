@@ -8,6 +8,7 @@ import com.whatsummary.data.llm.ModelDownloadManager
 import com.whatsummary.data.preferences.UserPreferences
 import com.whatsummary.data.repository.GroupRepository
 import com.whatsummary.data.repository.SummaryRepository
+import com.whatsummary.util.FileLogger
 import com.whatsummary.worker.SummaryScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -31,6 +32,7 @@ data class SettingsUiState(
     val showDeleteConfirmation: Boolean = false,
     val showTimePicker: Boolean = false,
     val exportedJson: String? = null,
+    val exportedLogs: String? = null,
     // Local model state
     val modelDownloaded: Boolean = false,
     val modelDownloading: Boolean = false,
@@ -45,7 +47,8 @@ class SettingsViewModel @Inject constructor(
     private val summaryScheduler: SummaryScheduler,
     private val summaryRepository: SummaryRepository,
     private val groupRepository: GroupRepository,
-    private val modelDownloadManager: ModelDownloadManager
+    private val modelDownloadManager: ModelDownloadManager,
+    private val fileLogger: FileLogger
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -182,5 +185,17 @@ class SettingsViewModel @Inject constructor(
 
     fun clearExportedJson() {
         _uiState.update { it.copy(exportedJson = null) }
+    }
+
+    fun exportLogs() {
+        viewModelScope.launch {
+            fileLogger.i("Settings", "User requested log export")
+            val logs = fileLogger.getCombinedLogs()
+            _uiState.update { it.copy(exportedLogs = logs.ifBlank { "(no logs yet)" }) }
+        }
+    }
+
+    fun clearExportedLogs() {
+        _uiState.update { it.copy(exportedLogs = null) }
     }
 }

@@ -19,6 +19,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.Button
@@ -82,6 +83,18 @@ fun SettingsScreen(
         }
         context.startActivity(Intent.createChooser(sendIntent, null))
         viewModel.clearExportedJson()
+    }
+
+    // Handle log export
+    LaunchedEffect(uiState.exportedLogs) {
+        val logs = uiState.exportedLogs ?: return@LaunchedEffect
+        val sendIntent = Intent(Intent.ACTION_SEND).apply {
+            putExtra(Intent.EXTRA_TEXT, logs)
+            putExtra(Intent.EXTRA_SUBJECT, "Whatsummary logs")
+            type = "text/plain"
+        }
+        context.startActivity(Intent.createChooser(sendIntent, "Compartilhar logs"))
+        viewModel.clearExportedLogs()
     }
 
     Scaffold(
@@ -352,6 +365,29 @@ fun SettingsScreen(
                     )
                     Text(
                         text = stringResource(R.string.settings_export_description),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            // Export logs
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { viewModel.exportLogs() }
+                    .padding(vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(Icons.Default.BugReport, contentDescription = null)
+                Spacer(modifier = Modifier.width(12.dp))
+                Column {
+                    Text(
+                        text = stringResource(R.string.settings_export_logs),
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Text(
+                        text = stringResource(R.string.settings_export_logs_description),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

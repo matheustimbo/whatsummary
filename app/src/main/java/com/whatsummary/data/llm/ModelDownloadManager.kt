@@ -1,23 +1,22 @@
 package com.whatsummary.data.llm
 
 import android.content.Context
+import com.whatsummary.util.FileLogger
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
-import okhttp3.OkHttpClient
-import okhttp3.Request
 import java.io.File
 import java.io.FileOutputStream
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class ModelDownloadManager @Inject constructor(
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    private val fileLogger: FileLogger
 ) {
     private val modelDir = File(context.filesDir, "models")
     private val modelFile = File(modelDir, MODEL_FILENAME)
@@ -48,6 +47,7 @@ class ModelDownloadManager @Inject constructor(
      */
     suspend fun ensureModel(): Result<String> = withContext(Dispatchers.IO) {
         if (isModelDownloaded()) {
+            fileLogger.i(TAG, "Model already extracted at ${modelFile.absolutePath} (${getModelSizeMb()} MB)")
             _downloadState.value = DownloadState.Completed
             return@withContext Result.success(modelFile.absolutePath)
         }
@@ -55,15 +55,18 @@ class ModelDownloadManager @Inject constructor(
         modelDir.mkdirs()
 
         if (isModelBundled()) {
+            fileLogger.i(TAG, "Extracting bundled model from assets")
             return@withContext extractFromAssets()
         }
 
+        fileLogger.w(TAG, "Model neither extracted nor bundled in assets")
         _downloadState.value = DownloadState.Error("Modelo não encontrado. Reinstale o app.")
         Result.failure(Exception("Model not bundled and no download fallback"))
     }
 
     private fun extractFromAssets(): Result<String> {
         _downloadState.value = DownloadState.Downloading(0f)
+        val start = System.currentTimeMillis()
 
         return try {
             context.assets.open("models/$MODEL_FILENAME").use { input ->
@@ -91,9 +94,15 @@ class ModelDownloadManager @Inject constructor(
                 tempFile.renameTo(modelFile)
             }
 
+            val elapsed = System.currentTimeMillis() - start
+            fileLogger.i(
+                TAG,
+                "Model extracted in ${elapsed}ms (size=${getModelSizeMb()} MB)"
+            )
             _downloadState.value = DownloadState.Completed
             Result.success(modelFile.absolutePath)
         } catch (e: Exception) {
+            fileLogger.e(TAG, "Failed to extract bundled model", e)
             _downloadState.value = DownloadState.Error(e.message ?: "Erro ao extrair modelo")
             File(modelDir, "$MODEL_FILENAME.tmp").delete()
             Result.failure(e)
@@ -114,6 +123,7 @@ class ModelDownloadManager @Inject constructor(
     }
 
     companion object {
+        private const val TAG = "ModelDownloadMgr"
         const val MODEL_FILENAME = "gemma3-1b-it-int4.task"
         const val MODEL_SIZE_MB = 657
     }

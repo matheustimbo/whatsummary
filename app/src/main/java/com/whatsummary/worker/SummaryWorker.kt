@@ -16,6 +16,7 @@ import com.whatsummary.data.preferences.UserPreferences
 import com.whatsummary.data.repository.GroupRepository
 import com.whatsummary.data.repository.MessageRepository
 import com.whatsummary.data.repository.SummaryRepository
+import com.whatsummary.util.FileLogger
 import com.whatsummary.util.PromptBuilder
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -30,20 +31,29 @@ class SummaryWorker @AssistedInject constructor(
     private val groupRepository: GroupRepository,
     private val apiGenerator: ApiSummaryGenerator,
     private val localGenerator: LocalSummaryGenerator,
-    private val preferences: UserPreferences
+    private val preferences: UserPreferences,
+    private val fileLogger: FileLogger
 ) : CoroutineWorker(appContext, workerParams) {
 
     override suspend fun doWork(): Result {
+        fileLogger.i(TAG, "SummaryWorker.doWork() start (attempt=$runAttemptCount)")
         val generator: SummaryGenerator = when (preferences.inferenceMode) {
             UserPreferences.MODE_API -> {
-                if (!apiGenerator.isAvailable()) return Result.failure()
+                if (!apiGenerator.isAvailable()) {
+                    fileLogger.w(TAG, "API mode but no API key configured — failing worker")
+                    return Result.failure()
+                }
                 apiGenerator
             }
             else -> {
                 if (!localGenerator.isAvailable()) {
-                    // Fallback to API if local model not downloaded
-                    if (apiGenerator.isAvailable()) apiGenerator
-                    else return Result.failure()
+                    if (apiGenerator.isAvailable()) {
+                        fileLogger.w(TAG, "Local model unavailable, falling back to API")
+                        apiGenerator
+                    } else {
+                        fileLogger.w(TAG, "Neither local nor API available — failing worker")
+                        return Result.failure()
+                    }
                 } else {
                     localGenerator
                 }
@@ -91,12 +101,14 @@ class SummaryWorker @AssistedInject constructor(
             val cutoffDate = today.minusDays(preferences.retentionDays.toLong()).toString()
             summaryRepository.deleteOlderThan(cutoffDate)
 
+            fileLogger.i(TAG, "SummaryWorker finished. Summarized $summarizedCount group(s).")
             if (summarizedCount > 0) {
                 sendNotification(summarizedCount)
             }
 
             Result.success()
         } catch (e: Exception) {
+            fileLogger.e(TAG, "SummaryWorker crashed (attempt=$runAttemptCount)", e)
             if (runAttemptCount < 3) Result.retry() else Result.failure()
         }
     }
@@ -119,6 +131,7 @@ class SummaryWorker @AssistedInject constructor(
     }
 
     companion object {
+        private const val TAG = "SummaryWorker"
         private const val MAX_GROUPS_PER_RUN = 20
         private const val NOTIFICATION_ID = 1001
     }
