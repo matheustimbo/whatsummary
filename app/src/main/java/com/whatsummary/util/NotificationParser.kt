@@ -17,6 +17,19 @@ object NotificationParser {
 
     private val WHATSAPP_PACKAGES = setOf("com.whatsapp", "com.whatsapp.w4b")
 
+    /**
+     * When WhatsApp stacks multiple unread messages, the conversationTitle
+     * gets a counter like "Group Name (3 messages)" / "Grupo (3 mensagens)".
+     * Strip that suffix so the logical group name is stable.
+     */
+    private val COUNTER_SUFFIX = Regex(
+        """\s*\(\d+\s*(novas\s+mensagens?|mensagens?|new\s+messages?|messages?)\)\s*$""",
+        RegexOption.IGNORE_CASE
+    )
+
+    private fun sanitizeGroupName(raw: String): String =
+        raw.replace(COUNTER_SUFFIX, "").trim()
+
     fun parse(sbn: StatusBarNotification): List<ParsedMessage> {
         if (sbn.packageName !in WHATSAPP_PACKAGES) return emptyList()
 
@@ -26,7 +39,8 @@ object NotificationParser {
         // If no conversationTitle, it's likely a DM — skip
         if (conversationTitle == null) return emptyList()
 
-        val groupName = conversationTitle
+        val groupName = sanitizeGroupName(conversationTitle)
+        if (groupName.isBlank()) return emptyList()
 
         // Try stacked messages first (EXTRA_TEXT_LINES)
         val textLines = extras.getCharSequenceArray(Notification.EXTRA_TEXT_LINES)

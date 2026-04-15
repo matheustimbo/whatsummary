@@ -39,13 +39,23 @@
     <string name="onboarding_back">Voltar</string>
 
     <!-- Home -->
-    <string name="home_title">Resumos</string>
-    <string name="home_empty_title">Nenhum resumo ainda</string>
-    <string name="home_empty_description">As mensagens dos seus grupos estão sendo coletadas. Toque no botão "Resumir agora" para gerar um resumo a qualquer momento.</string>
+    <string name="home_title">Grupos</string>
+    <string name="home_empty_title">Nenhum grupo detectado ainda</string>
+    <string name="home_empty_description">Use o WhatsApp normalmente. Quando mensagens de grupo chegarem como notificações, elas aparecerão aqui automaticamente.</string>
     <string name="home_today">Hoje</string>
     <string name="home_yesterday">Ontem</string>
     <string name="home_messages_count">%d mensagens</string>
     <string name="home_summarize_now">Resumir agora</string>
+    <string name="home_tap_to_see_messages">Toque para ver mensagens</string>
+    <string name="home_latest_message">%1$s: %2$s</string>
+    <string name="home_new_messages_today">%d novas hoje</string>
+    <string name="home_group_disabled">Grupo desativado</string>
+
+    <!-- Summaries screen (secondary) -->
+    <string name="summaries_title">Resumos</string>
+    <string name="summaries_empty_title">Nenhum resumo ainda</string>
+    <string name="summaries_empty_description">Vá para a tela inicial e toque em "Resumir agora" para gerar o primeiro resumo.</string>
+    <string name="summaries_empty_content_fallback">Não foi possível gerar o resumo. Toque em "Resumir novamente" na tela de detalhes.</string>
 
     <!-- Summary Detail -->
     <string name="summary_share">Compartilhar</string>

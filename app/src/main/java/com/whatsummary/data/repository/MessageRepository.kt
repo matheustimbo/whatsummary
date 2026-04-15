@@ -1,5 +1,6 @@
 package com.whatsummary.data.repository
 
+import com.whatsummary.data.db.dao.GroupCount
 import com.whatsummary.data.db.dao.MessageDao
 import com.whatsummary.data.db.dao.TrackedGroupDao
 import com.whatsummary.data.db.entity.CapturedMessage
@@ -59,6 +60,14 @@ class MessageRepository @Inject constructor(
             .toInstant()
             .toEpochMilli()
         return messageDao.observeMessagesForGroup(groupName, since)
+    }
+
+    fun observeLatestPerGroup(): Flow<List<CapturedMessage>> =
+        messageDao.observeLatestPerGroup()
+
+    fun observeTodayCountPerGroup(): Flow<List<GroupCount>> {
+        val (start, end) = dayBounds(LocalDate.now())
+        return messageDao.observeTodayCountPerGroup(start, end)
     }
 
     private fun dayBounds(date: LocalDate): Pair<Long, Long> {

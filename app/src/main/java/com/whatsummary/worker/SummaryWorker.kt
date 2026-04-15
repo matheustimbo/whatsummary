@@ -80,7 +80,11 @@ class SummaryWorker @AssistedInject constructor(
 
                 val result = generator.generateSummary(prompt)
                 if (result.isFailure) continue
-                val summaryText = result.getOrThrow()
+                val summaryText = result.getOrThrow().trim()
+                if (summaryText.isBlank()) {
+                    fileLogger.w(TAG, "Blank summary for group=${group.groupName}, skipping")
+                    continue
+                }
 
                 summaryRepository.saveSummary(
                     Summary(

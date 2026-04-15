@@ -8,9 +8,9 @@ sealed class Screen(val route: String) {
     data object SummaryDetail : Screen("summary/{summaryId}") {
         fun createRoute(summaryId: Long) = "summary/$summaryId"
     }
-    data object Groups : Screen("groups")
     data object GroupMessages : Screen("group_messages/{groupName}") {
         fun createRoute(groupName: String) = "group_messages/${Uri.encode(groupName)}"
     }
+    data object Summaries : Screen("summaries")
     data object Settings : Screen("settings")
 }

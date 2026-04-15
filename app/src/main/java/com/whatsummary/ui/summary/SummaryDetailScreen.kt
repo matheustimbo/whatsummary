@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.whatsummary.R
+import com.whatsummary.util.MarkdownCleaner
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -102,7 +103,7 @@ fun SummaryDetailScreen(
             }
 
             Text(
-                text = summary.content,
+                text = MarkdownCleaner.clean(summary.content),
                 style = MaterialTheme.typography.bodyLarge
             )
 
@@ -112,7 +113,7 @@ fun SummaryDetailScreen(
             Row(modifier = Modifier.fillMaxWidth()) {
                 OutlinedButton(
                     onClick = {
-                        val shareText = "${summary.groupName} - ${summary.date}\n\n${summary.content}"
+                        val shareText = "${summary.groupName} - ${summary.date}\n\n${MarkdownCleaner.clean(summary.content)}"
                         val sendIntent = Intent(Intent.ACTION_SEND).apply {
                             putExtra(Intent.EXTRA_TEXT, shareText)
                             type = "text/plain"

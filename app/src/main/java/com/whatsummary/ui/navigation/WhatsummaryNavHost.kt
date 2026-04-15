@@ -6,11 +6,11 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.whatsummary.ui.groups.GroupsScreen
 import com.whatsummary.ui.home.HomeScreen
 import com.whatsummary.ui.messages.GroupMessagesScreen
 import com.whatsummary.ui.onboarding.OnboardingScreen
 import com.whatsummary.ui.settings.SettingsScreen
+import com.whatsummary.ui.summaries.SummariesScreen
 import com.whatsummary.ui.summary.SummaryDetailScreen
 
 @Composable
@@ -34,14 +34,23 @@ fun WhatsummaryNavHost(
 
         composable(Screen.Home.route) {
             HomeScreen(
-                onSummaryClick = { summaryId ->
-                    navController.navigate(Screen.SummaryDetail.createRoute(summaryId))
+                onGroupClick = { groupName ->
+                    navController.navigate(Screen.GroupMessages.createRoute(groupName))
                 },
-                onGroupsClick = {
-                    navController.navigate(Screen.Groups.route)
+                onSummariesClick = {
+                    navController.navigate(Screen.Summaries.route)
                 },
                 onSettingsClick = {
                     navController.navigate(Screen.Settings.route)
+                }
+            )
+        }
+
+        composable(Screen.Summaries.route) {
+            SummariesScreen(
+                onBack = { navController.popBackStack() },
+                onSummaryClick = { summaryId ->
+                    navController.navigate(Screen.SummaryDetail.createRoute(summaryId))
                 }
             )
         }
@@ -52,15 +61,6 @@ fun WhatsummaryNavHost(
         ) {
             SummaryDetailScreen(
                 onBack = { navController.popBackStack() }
-            )
-        }
-
-        composable(Screen.Groups.route) {
-            GroupsScreen(
-                onBack = { navController.popBackStack() },
-                onGroupClick = { groupName ->
-                    navController.navigate(Screen.GroupMessages.createRoute(groupName))
-                }
             )
         }
 

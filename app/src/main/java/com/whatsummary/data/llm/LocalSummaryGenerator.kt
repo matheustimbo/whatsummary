@@ -34,7 +34,12 @@ class LocalSummaryGenerator @Inject constructor(
                     TAG,
                     "Summary generated in ${elapsed}ms (response length=${response.length})"
                 )
-                Result.success(response)
+                if (response.isBlank()) {
+                    fileLogger.w(TAG, "Model returned a blank response — prompt may be too long")
+                    Result.failure(IllegalStateException("Modelo retornou resposta vazia (prompt longo demais?)"))
+                } else {
+                    Result.success(response)
+                }
             } catch (e: Exception) {
                 fileLogger.e(TAG, "Failed to generate summary", e)
                 Result.failure(e)

@@ -9,6 +9,12 @@ object PromptBuilder {
 
     private val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
+    // Gemma 3 1B has a 2048-token context window (input + output combined).
+    // We budget ~1400 tokens for the messages to leave ~600 for the template
+    // overhead (instructions + headers) and ~600 for the generated summary.
+    // Rough heuristic: 1 token ≈ 4 chars of Portuguese text.
+    private const val MAX_INPUT_CHARS = 1400 * 4
+
     fun buildSummaryPrompt(
         groupName: String,
         date: String,
@@ -18,19 +24,24 @@ object PromptBuilder {
         val count = messages.size
 
         return """
-Você é um assistente que resume conversas de grupo do WhatsApp.
+Você é um assistente que resume conversas de grupos do WhatsApp.
 
-Regras:
-1. Resuma em português brasileiro, de forma concisa e objetiva.
-2. Estruture o resumo nas seguintes seções (inclua apenas as que tiverem conteúdo):
-   - 📋 Principais assuntos discutidos
-   - ✅ Decisões tomadas
-   - ❓ Perguntas que ficaram sem resposta
-   - 🔗 Links e mídias compartilhados (mencione o contexto)
-   - 📌 Menções importantes (se alguém foi diretamente chamado para algo)
-3. Não inclua fofocas ou conversas triviais (bom dia, figurinhas, etc.), a menos que dominem a conversa — nesse caso, mencione brevemente.
-4. Use no máximo 300 palavras por grupo.
-5. Se houver poucas mensagens (menos de 5), diga apenas o tema geral em uma frase.
+Regras obrigatórias:
+- Responda em português brasileiro.
+- Seja conciso (no máximo 150 palavras).
+- NÃO use asteriscos, markdown, negrito ou crases. Apenas texto simples.
+- Ignore cumprimentos, figurinhas e mensagens triviais, a não ser que dominem a conversa.
+- Inclua somente as seções que tiverem conteúdo real. Omita as demais.
+- NÃO numere as seções. Use exatamente os títulos abaixo com seus emojis.
+
+Seções disponíveis:
+📋 Assuntos discutidos:
+✅ Decisões tomadas:
+❓ Perguntas sem resposta:
+🔗 Links e mídias:
+📌 Menções importantes:
+
+Se houver menos de 5 mensagens úteis, responda apenas com o tema geral em uma frase, sem usar as seções.
 
 Grupo: $groupName
 Data: $date
@@ -38,43 +49,56 @@ Total de mensagens: $count
 
 Mensagens:
 $formattedMessages
+
+Resumo:
         """.trimIndent()
     }
 
     private fun formatMessages(messages: List<CapturedMessage>): String {
         val zone = ZoneId.systemDefault()
         val sb = StringBuilder()
-        var tokenEstimate = 0
-        val maxTokens = 3500
+        var charsUsed = 0
+        var omitted = 0
 
-        for (message in messages) {
+        // Preserve the chronological order (oldest → newest) but prefer to keep
+        // the most recent messages if we have to truncate — summaries are more
+        // useful when anchored to recent activity.
+        val kept = mutableListOf<String>()
+        val iterator = messages.asReversed().iterator() // newest first
+
+        while (iterator.hasNext()) {
+            val message = iterator.next()
             val time = Instant.ofEpochMilli(message.timestamp)
                 .atZone(zone)
                 .format(timeFormatter)
 
             val line = when (message.messageType) {
                 "text" -> "[$time] ${message.author}: ${message.text}"
-                "image" -> "[$time] ${message.author}: \uD83D\uDCF7 Foto"
-                "video" -> "[$time] ${message.author}: \uD83D\uDCF9 Vídeo"
-                "audio" -> "[$time] ${message.author}: \uD83C\uDFA4 Áudio (conteúdo não disponível)"
-                "document" -> "[$time] ${message.author}: \uD83D\uDCC4 Documento"
+                "image" -> "[$time] ${message.author}: 📷 Foto"
+                "video" -> "[$time] ${message.author}: 📹 Vídeo"
+                "audio" -> "[$time] ${message.author}: 🎤 Áudio"
+                "document" -> "[$time] ${message.author}: 📄 Documento"
                 "sticker" -> "[$time] ${message.author}: Figurinha"
                 "gif" -> "[$time] ${message.author}: GIF"
-                "location" -> "[$time] ${message.author}: \uD83D\uDCCD Localização"
+                "location" -> "[$time] ${message.author}: 📍 Localização"
                 "contact" -> "[$time] ${message.author}: Cartão de contato"
                 else -> "[$time] ${message.author}: ${message.text}"
             }
 
-            // Rough token estimate: ~4 chars per token
-            val lineTokens = line.length / 4
-            if (tokenEstimate + lineTokens > maxTokens) {
-                val remaining = messages.size - messages.indexOf(message)
-                sb.appendLine("[... $remaining mensagens anteriores omitidas ...]")
+            if (charsUsed + line.length + 1 > MAX_INPUT_CHARS) {
+                omitted = messages.size - kept.size
                 break
             }
+            kept.add(line)
+            charsUsed += line.length + 1
+        }
 
+        // kept is newest-first; flip back to oldest-first for the prompt.
+        for (line in kept.asReversed()) {
             sb.appendLine(line)
-            tokenEstimate += lineTokens
+        }
+        if (omitted > 0) {
+            sb.insert(0, "[... $omitted mensagens mais antigas omitidas por limite de contexto ...]\n")
         }
 
         return sb.toString().trimEnd()

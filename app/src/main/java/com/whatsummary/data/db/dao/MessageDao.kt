@@ -59,4 +59,33 @@ interface MessageDao {
         ORDER BY timestamp DESC
     """)
     fun observeMessagesForGroup(groupName: String, since: Long): Flow<List<CapturedMessage>>
+
+    /**
+     * Returns the most recent message (by timestamp) captured for each group
+     * that appears in the messages table. Uses a correlated subquery per row.
+     */
+    @Query("""
+        SELECT m.* FROM messages m
+        WHERE m.timestamp = (
+            SELECT MAX(timestamp) FROM messages WHERE group_name = m.group_name
+        )
+        ORDER BY m.timestamp DESC
+    """)
+    fun observeLatestPerGroup(): Flow<List<CapturedMessage>>
+
+    /**
+     * Returns [group_name, count] pairs for all messages captured today,
+     * so the Home screen can show how many new messages arrived per group.
+     */
+    @Query("""
+        SELECT group_name AS groupName, COUNT(*) AS count FROM messages
+        WHERE timestamp >= :startOfDay AND timestamp < :endOfDay
+        GROUP BY group_name
+    """)
+    fun observeTodayCountPerGroup(startOfDay: Long, endOfDay: Long): Flow<List<GroupCount>>
 }
+
+data class GroupCount(
+    val groupName: String,
+    val count: Int
+)
