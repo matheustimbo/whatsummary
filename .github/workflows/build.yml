@@ -50,8 +50,9 @@ jobs:
       - name: Rename APK
         run: |
           SHORT_SHA=$(git rev-parse --short HEAD)
+          echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_ENV
           mv app/build/outputs/apk/debug/app-debug.apk \
-             app/build/outputs/apk/debug/whatsummary-${SHORT_SHA}.apk
+             app/build/outputs/apk/debug/whatsummary.apk
           ls -lh app/build/outputs/apk/debug/
 
       - name: Upload debug APK as workflow artifact
@@ -70,16 +71,19 @@ jobs:
           body: |
             Última build automática do branch `${{ github.ref_name }}`.
 
-            **Commit:** ${{ github.sha }}
+            **Commit:** `${{ env.SHORT_SHA }}` — ${{ github.sha }}
             **Mensagem:** ${{ github.event.head_commit.message }}
 
+            ## Download direto
+            https://github.com/${{ github.repository }}/releases/latest/download/whatsummary.apk
+
             ## Como instalar
-            1. Baixe o `whatsummary-*.apk` abaixo no seu Android.
+            1. Baixe o `whatsummary.apk` no seu Android.
             2. Permita instalação de fontes desconhecidas se necessário.
             3. Instale o APK.
 
             ⚠️ Build de debug — não use em produção.
-          files: app/build/outputs/apk/debug/*.apk
+          files: app/build/outputs/apk/debug/whatsummary.apk
           prerelease: true
           make_latest: true
         env:
