@@ -1,6 +1,5 @@
 package com.whatsummary.worker
 
-import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import androidx.core.app.NotificationCompat
@@ -8,6 +7,7 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.whatsummary.R
+import com.whatsummary.WhatsummaryApp
 import com.whatsummary.data.api.AnthropicClient
 import com.whatsummary.data.db.entity.Summary
 import com.whatsummary.data.preferences.UserPreferences
@@ -89,14 +89,7 @@ class SummaryWorker @AssistedInject constructor(
         val notificationManager = applicationContext.getSystemService(Context.NOTIFICATION_SERVICE)
             as NotificationManager
 
-        val channel = NotificationChannel(
-            CHANNEL_ID,
-            applicationContext.getString(R.string.notification_channel_summary),
-            NotificationManager.IMPORTANCE_DEFAULT
-        )
-        notificationManager.createNotificationChannel(channel)
-
-        val notification = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
+        val notification = NotificationCompat.Builder(applicationContext, WhatsummaryApp.CHANNEL_SUMMARY)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentTitle(applicationContext.getString(R.string.app_name))
             .setContentText(
@@ -111,7 +104,6 @@ class SummaryWorker @AssistedInject constructor(
 
     companion object {
         private const val MAX_GROUPS_PER_RUN = 20
-        private const val CHANNEL_ID = "summary_channel"
         private const val NOTIFICATION_ID = 1001
     }
 }

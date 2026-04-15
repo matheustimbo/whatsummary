@@ -15,8 +15,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import com.squareup.moshi.Moshi
-import com.squareup.moshi.Types
+import org.json.JSONArray
+import org.json.JSONObject
 import javax.inject.Inject
 
 data class SettingsUiState(
@@ -27,7 +27,8 @@ data class SettingsUiState(
     val retentionDays: Int = 30,
     val notificationServiceActive: Boolean = false,
     val showDeleteConfirmation: Boolean = false,
-    val showTimePicker: Boolean = false
+    val showTimePicker: Boolean = false,
+    val exportedJson: String? = null
 )
 
 @HiltViewModel
@@ -36,8 +37,7 @@ class SettingsViewModel @Inject constructor(
     private val preferences: UserPreferences,
     private val summaryScheduler: SummaryScheduler,
     private val summaryRepository: SummaryRepository,
-    private val groupRepository: GroupRepository,
-    private val moshi: Moshi
+    private val groupRepository: GroupRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -111,27 +111,25 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun exportData(): String {
-        var json = "[]"
+    fun exportData() {
         viewModelScope.launch {
             val summaries = summaryRepository.getAllSummariesSnapshot()
-            val type = Types.newParameterizedType(
-                List::class.java,
-                Map::class.java
-            )
-            val data = summaries.map { s ->
-                mapOf(
-                    "group" to s.groupName,
-                    "date" to s.date,
-                    "content" to s.content,
-                    "messageCount" to s.messageCount.toString(),
-                    "model" to s.modelUsed
-                )
+            val jsonArray = JSONArray()
+            for (s in summaries) {
+                val obj = JSONObject().apply {
+                    put("group", s.groupName)
+                    put("date", s.date)
+                    put("content", s.content)
+                    put("messageCount", s.messageCount)
+                    put("model", s.modelUsed)
+                }
+                jsonArray.put(obj)
             }
-            @Suppress("UNCHECKED_CAST")
-            val adapter = moshi.adapter<Any>(type)
-            json = adapter.toJson(data)
+            _uiState.update { it.copy(exportedJson = jsonArray.toString(2)) }
         }
-        return json
+    }
+
+    fun clearExportedJson() {
+        _uiState.update { it.copy(exportedJson = null) }
     }
 }

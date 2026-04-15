@@ -34,6 +34,9 @@ import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -216,7 +219,12 @@ private fun NotificationStep(
     onRequestPermission: () -> Unit,
     onCheckPermission: () -> Unit
 ) {
-    LaunchedEffect(Unit) { onCheckPermission() }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    LaunchedEffect(lifecycleOwner) {
+        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            onCheckPermission()
+        }
+    }
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,

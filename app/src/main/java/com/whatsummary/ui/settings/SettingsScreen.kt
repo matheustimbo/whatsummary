@@ -19,6 +19,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -37,6 +38,7 @@ import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,7 +46,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import com.whatsummary.R
 import com.whatsummary.data.preferences.UserPreferences
 
@@ -56,6 +61,25 @@ fun SettingsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    // Re-check notification service status when returning from system settings
+    LaunchedEffect(lifecycleOwner) {
+        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            viewModel.refreshState()
+        }
+    }
+
+    // Handle export: share JSON via intent
+    LaunchedEffect(uiState.exportedJson) {
+        val json = uiState.exportedJson ?: return@LaunchedEffect
+        val sendIntent = Intent(Intent.ACTION_SEND).apply {
+            putExtra(Intent.EXTRA_TEXT, json)
+            type = "application/json"
+        }
+        context.startActivity(Intent.createChooser(sendIntent, null))
+        viewModel.clearExportedJson()
+    }
 
     Scaffold(
         topBar = {
@@ -213,6 +237,31 @@ fun SettingsScreen(
 
             HorizontalDivider()
 
+            // Export data
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { viewModel.exportData() }
+                    .padding(vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(Icons.Default.FileDownload, contentDescription = null)
+                Spacer(modifier = Modifier.width(12.dp))
+                Column {
+                    Text(
+                        text = stringResource(R.string.settings_export),
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Text(
+                        text = stringResource(R.string.settings_export_description),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            HorizontalDivider()
+
             // Delete all data
             Row(
                 modifier = Modifier
@@ -231,6 +280,17 @@ fun SettingsScreen(
                     text = stringResource(R.string.settings_delete_all),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.error
+                )
+            }
+
+            // About
+            HorizontalDivider()
+
+            SettingsSection(title = stringResource(R.string.settings_about)) {
+                Text(
+                    text = stringResource(R.string.settings_version, "1.0.0"),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
