@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Whatsummary</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_welcome_title">Bem-vindo ao Whatsummary</string>
+    <string name="onboarding_welcome_description">Receba resumos diários inteligentes das suas conversas de grupo do WhatsApp, gerados por IA.</string>
+    <string name="onboarding_welcome_privacy">Seus dados ficam no seu dispositivo. Nenhum servidor próprio é usado.</string>
+    <string name="onboarding_notification_title">Acesso a Notificações</string>
+    <string name="onboarding_notification_description">Para capturar as mensagens dos grupos, precisamos de permissão para ler notificações do WhatsApp.</string>
+    <string name="onboarding_notification_button">Conceder Permissão</string>
+    <string name="onboarding_notification_granted">Permissão concedida!</string>
+    <string name="onboarding_apikey_title">Chave da API</string>
+    <string name="onboarding_apikey_description">Insira sua chave da API da Anthropic para gerar os resumos. Sua chave fica armazenada de forma segura apenas no seu dispositivo.</string>
+    <string name="onboarding_apikey_hint">sk-ant-...</string>
+    <string name="onboarding_apikey_test">Testar Chave</string>
+    <string name="onboarding_apikey_valid">Chave válida!</string>
+    <string name="onboarding_apikey_invalid">Chave inválida. Verifique e tente novamente.</string>
+    <string name="onboarding_schedule_title">Horário do Resumo</string>
+    <string name="onboarding_schedule_description">Escolha o horário em que deseja receber o resumo diário.</string>
+    <string name="onboarding_next">Próximo</string>
+    <string name="onboarding_finish">Começar</string>
+    <string name="onboarding_back">Voltar</string>
+
+    <!-- Home -->
+    <string name="home_title">Resumos</string>
+    <string name="home_empty_title">Nenhum resumo ainda</string>
+    <string name="home_empty_description">As mensagens estão sendo coletadas — seu primeiro resumo chegará hoje à noite.</string>
+    <string name="home_today">Hoje</string>
+    <string name="home_yesterday">Ontem</string>
+    <string name="home_messages_count">%d mensagens</string>
+
+    <!-- Summary Detail -->
+    <string name="summary_share">Compartilhar</string>
+    <string name="summary_regenerate">Resumir novamente</string>
+    <string name="summary_regenerating">Gerando novo resumo…</string>
+
+    <!-- Groups -->
+    <string name="groups_title">Grupos</string>
+    <string name="groups_search_hint">Buscar grupo…</string>
+    <string name="groups_empty">Nenhum grupo detectado ainda. Use o WhatsApp normalmente e os grupos aparecerão aqui.</string>
+    <string name="groups_messages_today">%d mensagens hoje</string>
+    <string name="groups_first_seen">Detectado em %s</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Configurações</string>
+    <string name="settings_summary_time">Horário do resumo</string>
+    <string name="settings_api_key">Chave da API</string>
+    <string name="settings_api_key_configured">Configurada</string>
+    <string name="settings_api_key_not_configured">Não configurada</string>
+    <string name="settings_api_key_change">Alterar chave</string>
+    <string name="settings_model">Modelo de IA</string>
+    <string name="settings_model_haiku">Haiku (mais rápido e econômico)</string>
+    <string name="settings_model_sonnet">Sonnet (resumos mais detalhados)</string>
+    <string name="settings_retention">Retenção de dados</string>
+    <string name="settings_retention_days">%d dias</string>
+    <string name="settings_export">Exportar dados</string>
+    <string name="settings_export_description">Exportar todos os resumos em JSON</string>
+    <string name="settings_delete_all">Apagar todos os dados</string>
+    <string name="settings_delete_all_confirm">Tem certeza? Isso apagará todas as mensagens, resumos e configurações. Esta ação não pode ser desfeita.</string>
+    <string name="settings_delete_all_done">Dados apagados com sucesso</string>
+    <string name="settings_notification_status">Status do serviço</string>
+    <string name="settings_notification_active">Captura ativa</string>
+    <string name="settings_notification_inactive">Captura inativa — toque para ativar</string>
+    <string name="settings_about">Sobre</string>
+    <string name="settings_privacy_policy">Política de Privacidade</string>
+    <string name="settings_version">Versão %s</string>
+
+    <!-- General -->
+    <string name="cancel">Cancelar</string>
+    <string name="confirm">Confirmar</string>
+    <string name="ok">OK</string>
+    <string name="error_generic">Algo deu errado. Tente novamente.</string>
+    <string name="error_network">Erro de conexão. Verifique sua internet.</string>
+    <string name="error_api_key_missing">Configure sua chave da API nas configurações.</string>
+
+    <!-- Notifications -->
+    <string name="notification_channel_summary">Resumos diários</string>
+    <string name="notification_summary_ready">Seu resumo diário está pronto — %d grupos resumidos</string>
+</resources>
