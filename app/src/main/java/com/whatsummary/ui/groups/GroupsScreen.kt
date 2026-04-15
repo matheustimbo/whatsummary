@@ -1,5 +1,6 @@
 package com.whatsummary.ui.groups
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -42,6 +43,7 @@ import java.util.Locale
 @Composable
 fun GroupsScreen(
     onBack: () -> Unit,
+    onGroupClick: (String) -> Unit,
     viewModel: GroupsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -105,6 +107,7 @@ fun GroupsScreen(
                     items(uiState.filteredGroups, key = { it.groupName }) { group ->
                         GroupItem(
                             group = group,
+                            onClick = { onGroupClick(group.groupName) },
                             onToggle = { viewModel.toggleGroup(group.groupName, it) }
                         )
                     }
@@ -117,11 +120,13 @@ fun GroupsScreen(
 @Composable
 private fun GroupItem(
     group: TrackedGroup,
+    onClick: () -> Unit,
     onToggle: (Boolean) -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable(onClick = onClick)
             .padding(vertical = 12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically

@@ -53,6 +53,14 @@ class MessageRepository @Inject constructor(
 
     fun getAllGroupNames(): Flow<List<String>> = messageDao.getAllGroupNames()
 
+    fun observeRecentMessages(groupName: String, days: Int = 7): Flow<List<CapturedMessage>> {
+        val since = LocalDate.now().minusDays(days.toLong())
+            .atStartOfDay(ZoneId.systemDefault())
+            .toInstant()
+            .toEpochMilli()
+        return messageDao.observeMessagesForGroup(groupName, since)
+    }
+
     private fun dayBounds(date: LocalDate): Pair<Long, Long> {
         val zone = ZoneId.systemDefault()
         val start = date.atStartOfDay(zone).toInstant().toEpochMilli()

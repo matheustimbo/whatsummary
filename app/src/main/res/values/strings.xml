@@ -51,6 +51,12 @@
     <string name="summary_regenerate">Resumir novamente</string>
     <string name="summary_regenerating">Gerando novo resumo…</string>
 
+    <!-- Messages (live captured) -->
+    <string name="messages_title">Mensagens capturadas</string>
+    <string name="messages_total_count">%d mensagens (últimos 7 dias)</string>
+    <string name="messages_empty">Nenhuma mensagem capturada ainda. Mande uma mensagem nesse grupo no WhatsApp para ver aparecer aqui.</string>
+    <string name="messages_summarize_now">Resumir agora</string>
+
     <!-- Groups -->
     <string name="groups_title">Grupos</string>
     <string name="groups_search_hint">Buscar grupo…</string>

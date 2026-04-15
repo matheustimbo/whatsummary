@@ -8,6 +8,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.whatsummary.ui.groups.GroupsScreen
 import com.whatsummary.ui.home.HomeScreen
+import com.whatsummary.ui.messages.GroupMessagesScreen
 import com.whatsummary.ui.onboarding.OnboardingScreen
 import com.whatsummary.ui.settings.SettingsScreen
 import com.whatsummary.ui.summary.SummaryDetailScreen
@@ -56,6 +57,18 @@ fun WhatsummaryNavHost(
 
         composable(Screen.Groups.route) {
             GroupsScreen(
+                onBack = { navController.popBackStack() },
+                onGroupClick = { groupName ->
+                    navController.navigate(Screen.GroupMessages.createRoute(groupName))
+                }
+            )
+        }
+
+        composable(
+            route = Screen.GroupMessages.route,
+            arguments = listOf(navArgument("groupName") { type = NavType.StringType })
+        ) {
+            GroupMessagesScreen(
                 onBack = { navController.popBackStack() }
             )
         }

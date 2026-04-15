@@ -51,4 +51,12 @@ interface MessageDao {
 
     @Query("SELECT DISTINCT group_name FROM messages ORDER BY group_name")
     fun getAllGroupNames(): Flow<List<String>>
+
+    @Query("""
+        SELECT * FROM messages
+        WHERE group_name = :groupName
+        AND timestamp >= :since
+        ORDER BY timestamp DESC
+    """)
+    fun observeMessagesForGroup(groupName: String, since: Long): Flow<List<CapturedMessage>>
 }

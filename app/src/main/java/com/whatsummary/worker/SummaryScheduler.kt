@@ -4,7 +4,9 @@ import android.content.Context
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.whatsummary.data.preferences.UserPreferences
@@ -54,7 +56,29 @@ class SummaryScheduler @Inject constructor(
         WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME)
     }
 
+    /**
+     * Triggers a one-off run of the SummaryWorker immediately (used by the
+     * "Resumir agora" button in the messages screen). Doesn't replace the
+     * scheduled daily run.
+     */
+    fun runOnce() {
+        val request = OneTimeWorkRequestBuilder<SummaryWorker>()
+            .setConstraints(
+                Constraints.Builder()
+                    .setRequiredNetworkType(NetworkType.CONNECTED)
+                    .build()
+            )
+            .build()
+
+        WorkManager.getInstance(context).enqueueUniqueWork(
+            ONE_OFF_WORK_NAME,
+            ExistingWorkPolicy.REPLACE,
+            request
+        )
+    }
+
     companion object {
         const val WORK_NAME = "daily_summary"
+        const val ONE_OFF_WORK_NAME = "one_off_summary"
     }
 }
