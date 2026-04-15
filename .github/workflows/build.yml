@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -44,9 +47,40 @@ jobs:
       - name: Build debug APK
         run: ./gradlew assembleDebug
 
-      - name: Upload debug APK
+      - name: Rename APK
+        run: |
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          mv app/build/outputs/apk/debug/app-debug.apk \
+             app/build/outputs/apk/debug/whatsummary-${SHORT_SHA}.apk
+          ls -lh app/build/outputs/apk/debug/
+
+      - name: Upload debug APK as workflow artifact
         uses: actions/upload-artifact@v4
         with:
           name: whatsummary-debug
-          path: app/build/outputs/apk/debug/app-debug.apk
+          path: app/build/outputs/apk/debug/*.apk
           retention-days: 14
+
+      - name: Publish APK to "latest" GitHub Release (public download link)
+        if: github.event_name == 'push'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: "Whatsummary — latest build"
+          body: |
+            Última build automática do branch `${{ github.ref_name }}`.
+
+            **Commit:** ${{ github.sha }}
+            **Mensagem:** ${{ github.event.head_commit.message }}
+
+            ## Como instalar
+            1. Baixe o `whatsummary-*.apk` abaixo no seu Android.
+            2. Permita instalação de fontes desconhecidas se necessário.
+            3. Instale o APK.
+
+            ⚠️ Build de debug — não use em produção.
+          files: app/build/outputs/apk/debug/*.apk
+          prerelease: true
+          make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
