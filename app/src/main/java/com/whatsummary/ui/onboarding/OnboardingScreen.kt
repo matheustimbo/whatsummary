@@ -445,8 +445,21 @@ private fun LocalModelStep(
             }
             downloading -> {
                 Text(
-                    text = stringResource(R.string.onboarding_local_extracting),
+                    text = stringResource(
+                        R.string.onboarding_local_extracting,
+                        (progress * 100).toInt()
+                    ),
                     style = MaterialTheme.typography.bodyLarge,
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = stringResource(
+                        R.string.onboarding_local_description,
+                        ModelDownloadManager.MODEL_SIZE_MB
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
                     textAlign = TextAlign.Center,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

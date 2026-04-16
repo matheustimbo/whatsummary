@@ -229,7 +229,10 @@ fun SettingsScreen(
                         }
                     } else if (uiState.modelDownloading) {
                         Text(
-                            text = stringResource(R.string.onboarding_local_extracting),
+                            text = stringResource(
+                                R.string.onboarding_local_extracting,
+                                (uiState.modelDownloadProgress * 100).toInt()
+                            ),
                             style = MaterialTheme.typography.bodyMedium
                         )
                         Spacer(modifier = Modifier.height(8.dp))

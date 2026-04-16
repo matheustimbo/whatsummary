@@ -29,7 +29,11 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Download Gemma 3 1B model (bundled in APK)
+      # Fetch the Gemma model once. We do NOT bundle it in the APK anymore
+      # (downloading 600+ MB on mobile was too fragile). Instead we upload
+      # it as a separate public release asset; the app downloads it on
+      # first use of local mode.
+      - name: Download Gemma 3 1B model (uploaded as release asset)
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
@@ -37,12 +41,12 @@ jobs:
             echo "::error::HF_TOKEN secret is required. Create one at https://huggingface.co/settings/tokens and add it as a GitHub secret."
             exit 1
           fi
-          mkdir -p app/src/main/assets/models
+          mkdir -p release-assets
           curl -L --fail \
             -H "Authorization: Bearer $HF_TOKEN" \
             "https://huggingface.co/litert-community/Gemma3-1B-IT/resolve/main/gemma3-1b-it-int4.task" \
-            -o app/src/main/assets/models/gemma3-1b-it-int4.task
-          ls -lh app/src/main/assets/models/
+            -o release-assets/gemma3-1b-it-int4.task
+          ls -lh release-assets/
 
       - name: Build debug APK
         run: ./gradlew assembleDebug
@@ -52,17 +56,17 @@ jobs:
           SHORT_SHA=$(git rev-parse --short HEAD)
           echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_ENV
           mv app/build/outputs/apk/debug/app-debug.apk \
-             app/build/outputs/apk/debug/whatsummary.apk
-          ls -lh app/build/outputs/apk/debug/
+             release-assets/whatsummary.apk
+          ls -lh release-assets/
 
       - name: Upload debug APK as workflow artifact
         uses: actions/upload-artifact@v4
         with:
           name: whatsummary-debug
-          path: app/build/outputs/apk/debug/*.apk
+          path: release-assets/whatsummary.apk
           retention-days: 14
 
-      - name: Publish APK to "latest" GitHub Release (public download link)
+      - name: Publish APK + model to "latest" GitHub Release
         if: github.event_name == 'push'
         uses: softprops/action-gh-release@v2
         with:
@@ -74,17 +78,24 @@ jobs:
             **Commit:** `${{ env.SHORT_SHA }}` — ${{ github.sha }}
             **Mensagem:** ${{ github.event.head_commit.message }}
 
-            ## Download direto (funciona em qualquer browser, sem login)
-            - Link curto: https://github.com/${{ github.repository }}/releases/latest/download/whatsummary.apk
-            - Link direto por tag: https://github.com/${{ github.repository }}/releases/download/latest/whatsummary.apk
+            ## Download direto (sem login no GitHub)
+
+            **APK** (~60 MB, baixa rápido):
+            https://github.com/${{ github.repository }}/releases/latest/download/whatsummary.apk
+
+            **Modelo Gemma 3** (~530 MB, baixado pelo app automaticamente na primeira vez que usar o modo local):
+            https://github.com/${{ github.repository }}/releases/latest/download/gemma3-1b-it-int4.task
 
             ## Como instalar
-            1. Baixe o `whatsummary.apk` no seu Android.
-            2. Permita instalação de fontes desconhecidas se necessário.
-            3. Instale o APK.
+            1. Baixe o `whatsummary.apk` no seu Android
+            2. Permita instalação de fontes desconhecidas se necessário
+            3. Instale o APK
+            4. Abra o app, faça o onboarding — o modelo é baixado uma vez (use WiFi)
 
             ⚠️ Build de debug — não use em produção.
-          files: app/build/outputs/apk/debug/whatsummary.apk
+          files: |
+            release-assets/whatsummary.apk
+            release-assets/gemma3-1b-it-int4.task
           prerelease: false
           make_latest: true
         env:

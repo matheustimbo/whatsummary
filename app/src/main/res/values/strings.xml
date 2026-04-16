@@ -26,10 +26,10 @@
 
     <!-- Onboarding - Local model -->
     <string name="onboarding_local_title">Modelo Local</string>
-    <string name="onboarding_local_description">Preparando o modelo Gemma 3 para uso no aparelho.</string>
-    <string name="onboarding_local_extracting">Preparando modelo Gemma 3… Isso leva alguns segundos.</string>
+    <string name="onboarding_local_description">Baixando o modelo Gemma 3 (~%d MB). Feito apenas uma vez.</string>
+    <string name="onboarding_local_extracting">Baixando Gemma 3… %d%%</string>
     <string name="onboarding_local_ready">Gemma 3 pronto!</string>
-    <string name="onboarding_local_bundled_info">O modelo Gemma 3 está incluído no app e roda 100%% no seu aparelho, sem internet.</string>
+    <string name="onboarding_local_bundled_info">O modelo roda 100%% no seu aparelho, sem enviar mensagens para a nuvem. Use WiFi para o primeiro download.</string>
     <string name="onboarding_local_retry">Tentar novamente</string>
 
     <string name="onboarding_schedule_title">Horário do Resumo</string>
