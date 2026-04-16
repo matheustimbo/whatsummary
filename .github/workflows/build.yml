@@ -74,8 +74,9 @@ jobs:
             **Commit:** `${{ env.SHORT_SHA }}` — ${{ github.sha }}
             **Mensagem:** ${{ github.event.head_commit.message }}
 
-            ## Download direto
-            https://github.com/${{ github.repository }}/releases/latest/download/whatsummary.apk
+            ## Download direto (funciona em qualquer browser, sem login)
+            - Link curto: https://github.com/${{ github.repository }}/releases/latest/download/whatsummary.apk
+            - Link direto por tag: https://github.com/${{ github.repository }}/releases/download/latest/whatsummary.apk
 
             ## Como instalar
             1. Baixe o `whatsummary.apk` no seu Android.
@@ -84,7 +85,7 @@ jobs:
 
             ⚠️ Build de debug — não use em produção.
           files: app/build/outputs/apk/debug/whatsummary.apk
-          prerelease: true
+          prerelease: false
           make_latest: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
